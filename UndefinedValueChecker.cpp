@@ -1,12 +1,12 @@
 /*
-******                                      ******
-************                          ************
-Uinitialized and Array Index Out Of Bounds checker
-************                          ************
-******                                      ******
+******                                         ******
+************                             ************
+Undefined value and Array Index Out Of Bounds checker
+************                             ************
+******                                         ******
 */
 
-
+// includes
 #include "Taint.h"
 #include "clang/StaticAnalyzer/Checkers/BuiltinCheckerRegistration.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
@@ -18,15 +18,15 @@ Uinitialized and Array Index Out Of Bounds checker
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/raw_ostream.h"
 
+// namespaces
 using namespace clang;
 using namespace ento;
 using namespace taint;
 
 
-
 namespace {
 
-class ExampleChecker : public Checker<check::PostStmt<BinaryOperator>> {
+class UndefinedValueChecker : public Checker<check::PostStmt<BinaryOperator>> {
 
     private:
       mutable std::unique_ptr<BuiltinBug> BT;
@@ -47,7 +47,7 @@ static const Expr *getRHSExpr(const ExplodedNode *N) {
 }
 
 // simple report bug function 
-void ExampleChecker::reportBug(const Expr *Ex, const std::string &Msg, CheckerContext &C, std::unique_ptr<BugReporterVisitor> Visitor) const {
+void UndefinedValueChecker::reportBug(const Expr *Ex, const std::string &Msg, CheckerContext &C, std::unique_ptr<BugReporterVisitor> Visitor) const {
 
   if (ExplodedNode *N = C.generateNonFatalErrorNode()) {
     if (!BT)
@@ -88,29 +88,24 @@ static bool isArrayIndexOutOfBounds(CheckerContext &C, const Expr *Ex) {
   return StOutBound && !StInBound;
 }
 
-void ExampleChecker::checkPostStmt(const BinaryOperator *B, CheckerContext &C) const {
+void UndefinedValueChecker::checkPostStmt(const BinaryOperator *B, CheckerContext &C) const {
   
-  // BinaryOperator::Opcode Op = B->getOpcode();
-
-  // // Check if it is < or > op
-  // if (Op == BO_GT || Op == BO_LT){
-  //   reportBug("***> < ops..***", C);
-  //   return;
-  // }
-
-
+  // check if binary operator operands are undefined, if not do not analyze statement
   if (C.getSVal(B).isUndef()) {
 
-    // Do not report insde of swap ...
-    // This should allow to swap uninitialized structs
+    // Do not report assignments of uninitialized values inside swap functions.
+    // This should allow to swap partially uninitialized structs
     if (const FunctionDecl *EnclosingFunctionDecl = dyn_cast<FunctionDecl>(C.getStackFrame()->getDecl()))
       if (C.getCalleeName(EnclosingFunctionDecl) == "swap")
         return;
 
-    // err msg
+    // error message buffer
     std::string errMsg;
 
+    // monitored expression
     const Expr *Ex = nullptr;
+
+    // check is undefined left operand otherwise it's right
     bool isLeft = true;
 
     if (C.getSVal(B->getLHS()).isUndef()) {
@@ -129,9 +124,12 @@ void ExampleChecker::checkPostStmt(const BinaryOperator *B, CheckerContext &C) c
       errMsg += " operand of '";
       errMsg += BinaryOperator::getOpcodeStr(B->getOpcode());
       errMsg += "' is a garbage value";
+
+      // check if value is undefined due to array index out of bounds
       if (isArrayIndexOutOfBounds(C, Ex))
         errMsg += " due to array index out of bounds";
       
+      // report found bug
       reportBug(Ex, errMsg, C);
     }
 
@@ -141,10 +139,11 @@ void ExampleChecker::checkPostStmt(const BinaryOperator *B, CheckerContext &C) c
 }
 
 
-void ento::registerExampleChecker(CheckerManager &mgr) {
-  mgr.registerChecker<ExampleChecker>();
+// Register Undefined Value Checker
+void ento::registerUndefinedValueChecker(CheckerManager &mgr) {
+  mgr.registerChecker<UndefinedValueChecker>();
 }
 
-bool ento::shouldRegisterExampleChecker(const CheckerManager &mgr) {
+bool ento::shouldRegisterUndefinedValueChecker(const CheckerManager &mgr) {
   return true;
 }
