@@ -3,6 +3,7 @@ Undefined Value Checker is a Clang Static Analyzer checker which finds undefined
 
 # Team members
 Milos Mikovic 1050/2020
+Mateja Trtica 1111/2020
 
 # Building environment
 1. Build [LLVM](https://github.com/llvm/llvm-project) following the instructions from the Github page. (Over 8GiB of RAM highly recommended or increase swap memory). You can also use the following commands for building llvm:
