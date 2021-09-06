@@ -3,6 +3,7 @@ Undefined Value Checker is a Clang Static Analyzer checker which finds undefined
 
 # Team members
 Milos Mikovic 1050/2020
+
 Mateja Trtica 1111/2020
 
 # Building environment
