@@ -14,7 +14,9 @@ git clone https://github.com/llvm/llvm-project.git
 cd llvm-project
 mkdir build
 cd build
-cmake -DLLVM_ENABLE_PROJECTS=clang -G "Unix Makefiles" ../llvm
+cmake -DLLVM_ENABLE_PROJECTS=clang (-DBUILD_SHARED_LIBS=ON optional) -G "Unix Makefiles" ../llvm
+-DBUILD_SHARED_LIBS=ON - Very important option that determines that the linking of the project will be dynamic, 
+otherwise the linking will be static and will take a huge amount of time
 make (-j n (n - Specifies the number of jobs (commands) to run simultaneously.)) Example: make -j 8
 ```
 3. Copy `UndefinedValueChecker.cpp` to the `llvm-project/clang/lib/StaticAnalyzer/Checkers` folder.
